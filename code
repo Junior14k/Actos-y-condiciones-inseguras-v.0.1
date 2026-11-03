@@ -1,0 +1,2589 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Actos y Condiciones Inseguras</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<style>
+.radia-aviso { position: sticky; top: 0; z-index: 9999; padding: 8px 14px; font: 600 13px system-ui, sans-serif; background: #fdf6cf; color: #6b5a00; border-bottom: 2px solid #edcc06; }
+.radia-error { margin: 24px; padding: 16px; border-radius: 8px; background: #fdecea; color: #b3261e; font: 13px ui-monospace, monospace; white-space: pre-wrap; }
+</style>
+<style>
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fondo: #f4f5f3;
+  --superficie: #ffffff;
+  --borde: #e2e4df;
+  --texto: #1b1d1a;
+  --texto-2: #5b5f58;
+  --marca: #1f6b3a;
+  --marca-osc: #17532d;
+  --marca-suave: #e5f1e8;
+  --peligro: #b42318;
+  --alerta: #b54708;
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --radio: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+h1, h2, h3 { margin: 0 0 0.6rem; line-height: 1.2; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+
+.app { min-height: 100vh; }
+
+.barra-sup {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: var(--marca); color: #fff; padding: 12px 16px;
+}
+.barra-sup h1 { font-size: 1.05rem; margin: 0; }
+.barra-sup .sub { font-size: 0.8rem; opacity: 0.85; }
+.estado-red { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; white-space: nowrap; flex-wrap: wrap; justify-content: flex-end; }
+.punto { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.en-linea { background: #6fe39a; }
+.sin-senal { background: #ffb020; }
+.pend { background: #ffb020; color: #3d2a00; border-radius: 999px; padding: 1px 8px; font-weight: 600; }
+
+.pestanas {
+  display: flex; gap: 2px; overflow-x: auto; background: var(--superficie);
+  border-bottom: 1px solid var(--borde); padding: 0 8px; position: sticky; top: 0; z-index: 5;
+}
+.pestanas button {
+  background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 12px;
+  font: inherit; color: var(--texto-2); cursor: pointer; white-space: nowrap;
+}
+.pestanas button.activo { color: var(--marca); border-bottom-color: var(--marca); font-weight: 600; }
+.globo { background: var(--alerta); color: #fff; border-radius: 999px; padding: 0 6px; margin-left: 6px; font-size: 0.75rem; }
+
+.contenido { max-width: 860px; margin: 0 auto; padding: 16px; }
+.centro { text-align: center; padding: 3rem 1rem; }
+
+.card {
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio);
+  padding: 16px; margin-bottom: 16px;
+}
+
+.campo { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; border: 0; padding: 0; min-width: 0; flex: 1; }
+.campo > span { font-size: 0.85rem; font-weight: 600; color: var(--texto-2); }
+.req { color: var(--peligro); }
+.fila { display: flex; gap: 12px; flex-wrap: wrap; }
+.fila > .campo { min-width: 180px; }
+
+input, select, textarea {
+  font: inherit; color: inherit; background: #fff; width: 100%;
+  border: 1px solid #c9ccc5; border-radius: 8px; padding: 10px 10px; min-height: 44px;
+}
+textarea { resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--marca); outline-offset: 1px; border-color: var(--marca); }
+input:disabled, select:disabled { background: #f0f1ee; color: var(--texto-2); }
+
+button { font: inherit; cursor: pointer; }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+.primario, .secundario, .peligro, .exito {
+  border-radius: 8px; padding: 10px 16px; min-height: 44px; border: 1px solid transparent; font-weight: 600;
+}
+.primario { background: var(--marca); color: #fff; }
+.primario:hover:not(:disabled) { background: var(--marca-osc); }
+.secundario { background: #fff; color: var(--texto); border-color: #c9ccc5; }
+.peligro { background: #fff; color: var(--peligro); border-color: var(--peligro); }
+.exito { background: var(--marca); color: #fff; }
+.grande { width: 100%; font-size: 1.05rem; padding: 14px; }
+.enlace { background: none; border: 0; color: var(--marca); text-decoration: underline; padding: 0; }
+.botones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
+.segmentado { display: flex; gap: 8px; flex-wrap: wrap; }
+.segmentado button {
+  flex: 1; min-height: 44px; border-radius: 8px; border: 1px solid #c9ccc5; background: #fff; padding: 8px 12px;
+}
+.segmentado button.activo { background: var(--marca); border-color: var(--marca); color: #fff; font-weight: 600; }
+.segmentado .sevbtn-alto.activo { background: var(--peligro); border-color: var(--peligro); }
+.segmentado .sevbtn-medio.activo { background: var(--alerta); border-color: var(--alerta); }
+
+.boton-foto {
+  display: flex; align-items: center; justify-content: center; min-height: 52px; border: 2px dashed #b9bdb4;
+  border-radius: 8px; color: var(--texto-2); cursor: pointer; background: #fafbf9;
+}
+.foto-previa { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.foto-previa img { max-width: 160px; max-height: 160px; border-radius: 8px; border: 1px solid var(--borde); }
+.foto-detalle { max-width: 100%; border-radius: 8px; border: 1px solid var(--borde); margin: 8px 0; }
+
+.banda { border-radius: 8px; padding: 10px 12px; margin: 0 0 14px; }
+.banda-offline { background: #fff4e0; color: #6b3d00; }
+.aviso { border-radius: 8px; padding: 10px 12px; margin: 4px 0 14px; }
+.aviso-ok { background: var(--marca-suave); color: var(--marca-osc); }
+.aviso-pendiente { background: #fff4e0; color: #6b3d00; }
+.aviso-error { background: #fdecea; color: var(--peligro); }
+.error { color: var(--peligro); }
+.hint { color: var(--texto-2); font-size: 0.85rem; }
+.vacio { color: var(--texto-2); text-align: center; padding: 24px 8px; }
+
+.chips, .chips-fila { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.chips-fila { margin-bottom: 10px; }
+.chip { border-radius: 999px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600; background: #eceee9; color: var(--texto); }
+.e-reportado { background: #e3edfb; color: #1d4f91; }
+.e-validado { background: #efe7fb; color: #4b2a8f; }
+.e-rechazado { background: #eceee9; color: var(--texto-2); }
+.e-plan { background: #fff1d6; color: #7a4a00; }
+.e-cerrado { background: var(--marca-suave); color: var(--marca-osc); }
+.e-vencido { background: #fdecea; color: var(--peligro); }
+.sev { border-radius: 4px; padding: 1px 8px; font-size: 0.78rem; font-weight: 700; border: 1px solid; }
+.sev-alto { color: var(--peligro); border-color: var(--peligro); }
+.sev-medio { color: var(--alerta); border-color: var(--alerta); }
+.sev-bajo { color: var(--texto-2); border-color: #b9bdb4; }
+
+.lista { display: flex; flex-direction: column; gap: 10px; }
+.tarjeta {
+  text-align: left; width: 100%; background: var(--superficie); border: 1px solid var(--borde);
+  border-radius: var(--radio); padding: 12px 14px; color: inherit;
+}
+.tarjeta:hover { border-color: var(--marca); }
+.tarjeta-cab { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tarjeta-desc { margin: 6px 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.tarjeta-pie { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.8rem; color: var(--texto-2); align-items: center; }
+
+.pendiente { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--borde); }
+
+.filtros { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; }
+.filtro { border: 1px solid #c9ccc5; background: #fff; border-radius: 999px; padding: 6px 12px; white-space: nowrap; }
+.filtro.activo { background: var(--marca); border-color: var(--marca); color: #fff; }
+.buscador { margin-bottom: 12px; }
+
+.modal {
+  position: fixed; inset: 0; background: rgba(20, 22, 19, 0.5); z-index: 20;
+  display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 24px 12px;
+}
+.modal-caja { background: var(--superficie); border-radius: 12px; width: 100%; max-width: 680px; padding: 18px; }
+.modal-cab { display: flex; justify-content: space-between; align-items: center; }
+.cerrar { background: none; border: 0; font-size: 1.3rem; padding: 6px 10px; }
+.descripcion { white-space: pre-wrap; font-size: 1.02rem; }
+.datos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 16px; margin: 0 0 8px; }
+.dato dt { font-size: 0.75rem; color: var(--texto-2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+.dato dd { margin: 0; }
+.bloque { border-top: 1px solid var(--borde); padding-top: 12px; margin-top: 12px; }
+.bloque p { margin: 0 0 4px; white-space: pre-wrap; }
+.bloque-accion { background: #fafbf9; border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px; }
+.bloque-accion textarea { margin-bottom: 10px; }
+.bloque-ok h3 { color: var(--marca-osc); }
+.historial { margin: 0; padding-left: 18px; }
+.historial li { margin-bottom: 8px; }
+
+.asig { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--borde); }
+
+/* Dashboard */
+.dash-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.filtros-dash { display: flex; gap: 12px; flex-wrap: wrap; }
+.filtros-dash .campo { min-width: 150px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.kpi { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px; display: flex; flex-direction: column; }
+.kpi span { font-size: 0.8rem; color: var(--texto-2); }
+.kpi b { font-size: 1.8rem; font-variant-numeric: tabular-nums; }
+.kpi small { color: var(--texto-2); }
+.kpi-alerta { border-color: var(--peligro); }
+.kpi-alerta span { color: var(--peligro); font-weight: 600; }
+.graficos { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 16px; }
+.barra-fila { display: grid; grid-template-columns: minmax(90px, 40%) 1fr 34px; align-items: center; gap: 8px; margin: 6px 0; font-size: 0.85rem; }
+.barra-etq { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-pista { height: 14px; }
+.barra { display: block; height: 100%; background: var(--serie-1); border-radius: 0 4px 4px 0; min-width: 2px; }
+.barra-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--texto-2); }
+.leyenda { display: flex; gap: 16px; font-size: 0.82rem; color: var(--texto-2); margin-bottom: 8px; flex-wrap: wrap; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.sw-1, .c1 { background: var(--serie-1); }
+.sw-2, .c2 { background: var(--serie-2); }
+.columnas { display: flex; gap: 4px; align-items: stretch; height: 160px; border-bottom: 1px solid var(--borde); }
+.col-grupo { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.col-grupo:hover { background: #f4f5f3; }
+.col-barras { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+.col { width: 40%; max-width: 14px; border-radius: 4px 4px 0 0; min-height: 0; }
+.col-etq { font-size: 0.68rem; color: var(--texto-2); text-align: center; padding-top: 4px; margin-bottom: -20px; }
+.grafico .columnas { margin-bottom: 22px; }
+.tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.tabla th, .tabla td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--borde); }
+.tabla td:not(:first-child), .tabla th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 520px) {
+  .contenido { padding: 12px; }
+  .barra-sup h1 { font-size: 0.95rem; }
+  .modal { padding: 0; }
+  .modal-caja { border-radius: 0; min-height: 100vh; }
+  .col-etq { font-size: 0.6rem; }
+}
+
+.pestanas { top: 35px; }
+.modal { z-index: 10000; }
+</style>
+</head>
+<body>
+<div class="radia-aviso">Para probar «sin señal», pon tu navegador en modo avión.</div>
+<div id="root"></div>
+<script>
+(function () {
+  'use strict';
+  var React = window.React;
+  if (!React) {
+    throw new Error('sdk-mock.js necesita React 18 UMD cargado antes.');
+  }
+  var h = React.createElement;
+
+  var usuario = {
+    username: 'usuario-de-prueba',
+    email: 'persona@launion.com.gt',
+    display_name: 'Persona de Prueba',
+    name: 'Persona de Prueba',
+    permissions: ['*'],
+    is_manager: false,
+    image_url: null,
+  };
+
+  function ApiError(status, message) {
+    var e = new Error(message);
+    e.name = 'ApiError';
+    e.status = status;
+    Object.setPrototypeOf(e, ApiError.prototype);
+    return e;
+  }
+  ApiError.prototype = Object.create(Error.prototype);
+
+  var Contexto = React.createContext({ kind: 'loading' });
+
+  function AppStoreProvider(props) {
+    var estado = React.useState({ kind: 'loading' });
+    React.useEffect(function () {
+      props.loadUser().then(
+        function (u) { estado[1]({ kind: 'ok', user: u }); },
+        function (e) { estado[1]({ kind: 'error', message: String(e && e.message) }); }
+      );
+    }, []);
+    return h(Contexto.Provider, { value: estado[0] }, props.children);
+  }
+  function useUserState() { return React.useContext(Contexto); }
+  function useUser() { var s = useUserState(); return s.kind === 'ok' ? s.user : null; }
+  function userHasPermission(u, code) {
+    return !!u && (u.permissions.indexOf('*') !== -1 || u.permissions.indexOf(code) !== -1);
+  }
+  function usePermission(code) { return userHasPermission(useUser(), code); }
+  function useLogout() { return function () { window.alert('Vista previa: acá se cerraría la sesión.'); }; }
+  function RequirePermission(props) {
+    var s = useUserState();
+    if (s.kind === 'loading') return props.loading || null;
+    return usePermission(props.code) ? props.children : props.fallback || null;
+  }
+
+  window.RadiaPreview = {
+    usuario: usuario,
+    sdk: {
+      AppStoreProvider: AppStoreProvider,
+      useUser: useUser,
+      useUserState: useUserState,
+      usePermission: usePermission,
+      useLogout: useLogout,
+      RequirePermission: RequirePermission,
+      userHasPermission: userHasPermission,
+      createClient: null,
+      ApiError: ApiError,
+    },
+  };
+})();
+
+</script>
+<script>
+/* Backend simulado SOLO para la vista previa. Imita los endpoints reales de la app. */
+(function () {
+  var P = window.RadiaPreview;
+  P.usuario.username = 'jmenendez';
+  P.usuario.email = 'jmenendez@launion.com.gt';
+  P.usuario.display_name = 'Junior Menéndez';
+  P.usuario.name = 'Junior Menéndez';
+  P.usuario.permissions = ['view', 'admin'];
+
+  var KEY = 'radia-previa-actos-v1';
+  var db;
+  try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
+  function hoy(n) { var d = new Date(); d.setDate(d.getDate() - (n || 0)); return d.toISOString().slice(0, 10); }
+  function ahora(n) { var d = new Date(); d.setDate(d.getDate() - (n || 0)); return d.toISOString(); }
+  if (!db) {
+    db = { reportes: [], fotos: {}, asig: [
+      { id: 1, correo: 'jmenendez@launion.com.gt', nombre: 'Junior Menéndez', rol: 'seguridad', gerencia: '', area: '', creado_por: 'Configuración inicial', created_at: ahora(5) },
+      { id: 2, correo: 'supervisor.fabrica@launion.com.gt', nombre: 'Supervisor de ejemplo', rol: 'encargado', gerencia: 'Producción de Edulcorantes', area: 'Fabricación', creado_por: 'Junior Menéndez', created_at: ahora(4) }
+    ], sig: 1, sigA: 3 };
+    var ej = [
+      ['Condición insegura', 'Producción de Edulcorantes', 'Fabricación', 'Refinería', 'Escalera del tacho 3', 'Mecánicos', 'Caída al mismo o diferente nivel', 'Baranda floja en la escalera de acceso.', 'Alto', 'Cerrado', 20],
+      ['Acto inseguro', 'Operaciones Agrícolas', 'Taller', 'Taller Automotríz', 'Rampa de lavado', 'Mecánicos', 'Atrapamiento en, por, entre', 'Mecánico trabajando bajo camión sin calzas.', 'Alto', 'En plan de acción', 12],
+      ['Condición insegura', 'Producción de Edulcorantes', 'Generación de Energía', 'Operación Generación', 'Tablero caldera 2', 'Eléctricos', 'Contacto directo con partes energizadas', 'Tablero sin tapa con cables expuestos.', 'Alto', 'Validado', 6],
+      ['Acto inseguro', 'Operaciones Agrícolas', 'Corte, Alce y Transporte', 'Transporte', 'Patio de intercambio', 'Mecánicos', 'Atropellamiento', 'Personal cruzando entre rastras en movimiento.', 'Medio', 'Reportado', 2],
+      ['Condición insegura', 'Gestión de Talento', 'Hotel y Club', '', 'Cocina del club', 'Locativos', 'Fuego o explosión', 'Extintor vencido junto a la estufa.', 'Medio', 'Reportado', 1],
+      ['Acto inseguro', 'Producción de Edulcorantes', 'Extracción y Molienda', 'Operación Extracción y Molienda', 'Molinos A', 'Físicos', 'Exposición a ruido', 'Operador sin protección auditiva.', 'Bajo', 'Rechazado', 9]
+    ];
+    ej.forEach(function (x) {
+      var id = db.sig++;
+      var r = { id: id, client_id: 'ej-' + id, tipo: x[0], fecha: hoy(x[10]), hora: '09:15', gerencia: x[1], area: x[2], proceso: x[3], subproceso: '', lugar: x[4], tipo_riesgo: x[5], riesgo: x[6], descripcion: x[7], severidad: x[8], codigo_maquina: '', reporta_usuario: 'otro', reporta_nombre: 'Colaborador de ejemplo', reporta_correo: '', estado: x[9], validacion_comentario: x[9] === 'Rechazado' ? 'Ya reportado en #1.' : '', validado_por: x[9] !== 'Reportado' ? 'Junior Menéndez' : '', validado_at: null, plan_accion: '', plan_responsable: '', plan_fecha: null, plan_por: '', plan_at: null, cierre_comentario: '', cerrado_por: '', cerrado_at: null, created_at: ahora(x[10]), eventos: [{ accion: 'Reportado', detalle: '', usuario_nombre: 'Colaborador de ejemplo', created_at: ahora(x[10]) }] };
+      if (x[9] === 'En plan de acción' || x[9] === 'Cerrado') { r.plan_accion = 'Corregir la condición y capacitar al personal.'; r.plan_responsable = 'Jefe de área'; r.plan_fecha = hoy(x[9] === 'Cerrado' ? 15 : 3); }
+      if (x[9] === 'Cerrado') { r.cierre_comentario = 'Baranda soldada y verificada.'; r.cerrado_por = 'Supervisor de ejemplo'; r.cerrado_at = ahora(14); }
+      db.reportes.push(r);
+    });
+  }
+  function guardar() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
+  function err(s, m) { var e = new P.sdk.ApiError(s, m); return e; }
+  var ABIERTOS = ['Reportado', 'Validado', 'En plan de acción'];
+  function vencido(r) { return r.estado === 'En plan de acción' && r.plan_fecha && r.plan_fecha < hoy(0); }
+  function salida(r) {
+    var o = JSON.parse(JSON.stringify(r));
+    o.es_mio = r.reporta_usuario === 'jmenendez'; o.vencido = !!vencido(r);
+    o.fotos = Object.keys(db.fotos).filter(function (k) { return k.indexOf(r.id + ':') === 0; }).map(function (k) { return k.split(':')[1]; });
+    o.puede_validar = r.estado === 'Reportado';
+    o.puede_gestionar = r.estado === 'Validado' || r.estado === 'En plan de acción';
+    return o;
+  }
+  function ev(r, a, d) { r.eventos.push({ accion: a, detalle: d || '', usuario_nombre: 'Junior Menéndez', created_at: new Date().toISOString() }); }
+  function buscar(id) { var r = db.reportes.find(function (x) { return x.id === Number(id); }); if (!r) throw err(404, 'No existe ese reporte.'); return r; }
+
+  function responder(m, ruta, body) {
+    var partes = ruta.split('?'); var p = partes[0].replace(/^\/+|\/+$/g, '').split('/'); var q = new URLSearchParams(partes[1] || '');
+    if (m === 'GET' && p[0] === 'me') return P.usuario;
+    if (m === 'GET' && p[0] === 'perfil') return { es_seguridad: true, encargado_de: [] };
+    if (p[0] === 'reportes' && p.length === 1) {
+      if (m === 'POST') {
+        var ya = db.reportes.find(function (x) { return x.client_id === body.client_id; }); if (ya) return salida(ya);
+        var r = Object.assign({}, body, { id: db.sig++, reporta_usuario: 'jmenendez', reporta_nombre: 'Junior Menéndez', reporta_correo: 'jmenendez@launion.com.gt', estado: 'Reportado', validacion_comentario: '', validado_por: '', validado_at: null, plan_accion: '', plan_responsable: '', plan_fecha: null, plan_por: '', plan_at: null, cierre_comentario: '', cerrado_por: '', cerrado_at: null, created_at: new Date().toISOString(), eventos: [] });
+        if (r.foto) db.fotos[r.id + ':reporte'] = r.foto; delete r.foto; ev(r, 'Reportado'); db.reportes.push(r); guardar(); return salida(r);
+      }
+      var lista = db.reportes.slice().reverse();
+      if (q.get('vista') === 'mios') lista = lista.filter(function (x) { return x.reporta_usuario === 'jmenendez'; });
+      return lista.map(salida);
+    }
+    if (p[0] === 'reportes' && p.length === 2 && m === 'GET') return salida(buscar(p[1]));
+    if (p[0] === 'reportes' && p[2] === 'validacion') {
+      var r1 = buscar(p[1]); if (!body.aprobado && !body.comentario.trim()) throw err(422, 'Para rechazar, escribe el motivo.');
+      r1.estado = body.aprobado ? 'Validado' : 'Rechazado'; r1.validacion_comentario = body.comentario; r1.validado_por = 'Junior Menéndez'; ev(r1, r1.estado, body.comentario); guardar(); return salida(r1);
+    }
+    if (p[0] === 'reportes' && p[2] === 'plan') {
+      var r2 = buscar(p[1]); var nuevo = r2.estado === 'Validado'; r2.estado = 'En plan de acción'; r2.plan_accion = body.accion; r2.plan_responsable = body.responsable; r2.plan_fecha = body.fecha_compromiso; r2.plan_por = 'Junior Menéndez';
+      ev(r2, nuevo ? 'Plan de acción' : 'Plan actualizado', body.accion + ' — Responsable: ' + body.responsable + ', compromiso ' + body.fecha_compromiso); guardar(); return salida(r2);
+    }
+    if (p[0] === 'reportes' && p[2] === 'cierre') {
+      var r3 = buscar(p[1]); r3.estado = 'Cerrado'; r3.cierre_comentario = body.comentario; r3.cerrado_por = 'Junior Menéndez'; r3.cerrado_at = new Date().toISOString();
+      if (body.foto) db.fotos[r3.id + ':cierre'] = body.foto; ev(r3, 'Cerrado', body.comentario); guardar(); return salida(r3);
+    }
+    if (p[0] === 'dashboard') {
+      var f = db.reportes.filter(function (r) { return (!q.get('desde') || r.fecha >= q.get('desde')) && (!q.get('hasta') || r.fecha <= q.get('hasta')) && (!q.get('gerencia') || r.gerencia === q.get('gerencia')); });
+      function cuenta(campo, vals) { return vals.map(function (v) { return { nombre: v, total: f.filter(function (r) { return r[campo] === v; }).length }; }); }
+      var ger = {}; f.forEach(function (r) { var g = ger[r.gerencia] = ger[r.gerencia] || { nombre: r.gerencia, total: 0, abiertos: 0 }; g.total++; if (ABIERTOS.indexOf(r.estado) >= 0) g.abiertos++; });
+      var rie = {}; f.forEach(function (r) { rie[r.tipo_riesgo] = (rie[r.tipo_riesgo] || 0) + 1; });
+      var cerr = f.filter(function (r) { return r.estado === 'Cerrado'; }).length; var val = f.filter(function (r) { return r.estado !== 'Rechazado'; }).length;
+      var lunes = new Date(); lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7)); var tend = [];
+      for (var i = 11; i >= 0; i--) { var s = new Date(lunes); s.setDate(s.getDate() - 7 * i); var ini = s.toISOString().slice(0, 10); var e = new Date(s); e.setDate(e.getDate() + 6); var fin = e.toISOString().slice(0, 10);
+        var sem = f.filter(function (r) { return r.fecha >= ini && r.fecha <= fin; }); tend.push({ semana: ini, actos: sem.filter(function (r) { return r.tipo === 'Acto inseguro'; }).length, condiciones: sem.filter(function (r) { return r.tipo !== 'Acto inseguro'; }).length }); }
+      return { total: f.length, abiertos: f.filter(function (r) { return ABIERTOS.indexOf(r.estado) >= 0; }).length, cerrados: cerr, vencidos: f.filter(vencido).length,
+        porcentaje_cierre: val ? Math.round(100 * cerr / val) : 0, dias_promedio_cierre: cerr ? 6 : null,
+        por_estado: cuenta('estado', ['Reportado', 'Validado', 'Rechazado', 'En plan de acción', 'Cerrado']), por_tipo: cuenta('tipo', ['Acto inseguro', 'Condición insegura']),
+        por_severidad: cuenta('severidad', ['Alto', 'Medio', 'Bajo']), por_gerencia: Object.values(ger).sort(function (a, b) { return b.total - a.total; }),
+        por_riesgo: Object.keys(rie).map(function (k) { return { nombre: k, total: rie[k] }; }).sort(function (a, b) { return b.total - a.total; }), tendencia: tend };
+    }
+    if (p[0] === 'asignaciones') {
+      if (m === 'GET') return db.asig;
+      if (m === 'POST') { var a = Object.assign({}, body, { id: db.sigA++, correo: body.correo.trim().toLowerCase(), creado_por: 'Junior Menéndez', created_at: new Date().toISOString() }); if (a.rol === 'seguridad') { a.gerencia = ''; a.area = ''; } db.asig.push(a); guardar(); return a; }
+      if (m === 'DELETE') { var x = db.asig.find(function (z) { return z.id === Number(p[1]); }); if (x && x.rol === 'seguridad' && db.asig.filter(function (z) { return z.rol === 'seguridad'; }).length <= 1) throw err(409, 'Debe quedar al menos una persona de Seguridad Industrial.'); db.asig = db.asig.filter(function (z) { return z.id !== Number(p[1]); }); guardar(); return null; }
+    }
+    throw err(404, 'Ruta no simulada: ' + m + ' ' + ruta);
+  }
+
+  P.sdk.createClient = function () {
+    function request(path, init) {
+      var m = ((init && init.method) || 'GET').toUpperCase();
+      return new Promise(function (ok, falla) {
+        setTimeout(function () {
+          if (!navigator.onLine) return falla(new TypeError('Failed to fetch'));
+          try { ok(JSON.parse(JSON.stringify(responder(m, path, init && init.body) ?? null))); } catch (e) { falla(e); }
+        }, 200);
+      });
+    }
+    return { request: request,
+      get: function (p) { return request(p, { method: 'GET' }); },
+      post: function (p, b) { return request(p, { method: 'POST', body: b }); },
+      put: function (p, b) { return request(p, { method: 'PUT', body: b }); },
+      del: function (p) { return request(p, { method: 'DELETE' }); } };
+  };
+  window.RadiaFotoUrl = function (id, tipo) { return db.fotos[id + ':' + tipo] || ''; };
+})();
+
+</script>
+<script type="text/plain" data-archivo="catalogo.ts">
+// Catálogos del formulario. Generado desde los Excel de Seguridad Industrial
+// (gerencias.xlsx y riesgos.xlsx). Viven en el frontend para que el formulario
+// funcione sin señal. Una cadena vacía "" significa «No aplica».
+
+export type Jerarquia = Record<string, Record<string, Record<string, string[]>>>;
+
+export const JERARQUIA: Jerarquia = {
+  "Administración y Finanzas": {
+    "": {
+      "": []
+    },
+    "Contabilidad": {
+      "": []
+    },
+    "Costos y Presupuestos": {
+      "": []
+    },
+    "Legal y Jurídico": {
+      "": []
+    },
+    "Planificación Financiera": {
+      "": []
+    },
+    "Tesoreria": {
+      "": []
+    }
+  },
+  "Aseguramiento de la Calidad": {
+    "": {
+      "": []
+    },
+    "Control de Calidad Agrícola": {
+      "": [],
+      "Control de Calidad y Oportunidad Agrícola": [],
+      "Laboratorio de Materia Prima": []
+    },
+    "Control de Calidad Industrial": {
+      "": [],
+      "Laboratorio Industrial": []
+    },
+    "Gestión empresarial": {
+      "": [],
+      "Gestión de Calidad": []
+    },
+    "Servicios de Aseguramiento de la Calidad": {
+      "": [],
+      "Aguas Industriales": [],
+      "Operación de basculas": []
+    }
+  },
+  "Auditoria Interna": {
+    "": {
+      "": []
+    }
+  },
+  "Comercialización de Azúcar": {
+    "": {
+      "": []
+    },
+    "Logística y Exportaciones": {
+      "": []
+    },
+    "Producto Terminado": {
+      "": []
+    }
+  },
+  "Comercialización de Energia": {
+    "": {
+      "": []
+    }
+  },
+  "Gerencia General": {
+    "": {
+      "": []
+    },
+    "Cadena de Abastecimiento": {
+      "": [],
+      "Compras": [],
+      "Servicios": [],
+      "Suministros": [
+        "Bodega de Combustible",
+        "Bodega de Suministros"
+      ]
+    }
+  },
+  "Gestión de Talento": {
+    "": {
+      "": []
+    },
+    "Aprendizaje y Desarrollo": {
+      "": []
+    },
+    "Centro Educativo": {
+      "": []
+    },
+    "Compensación y Beneficios": {
+      "": []
+    },
+    "Comunicación Corporativa": {
+      "": []
+    },
+    "Coordinaciones de GDT": {
+      "": []
+    },
+    "Hotel y Club": {
+      "": []
+    },
+    "Mantenimiento e Infraestructura": {
+      "": [],
+      "Limpieza de Calderas": [],
+      "Reciclaje": []
+    },
+    "Responsabilidad Social Empresarial": {
+      "": []
+    },
+    "Salud Ocupacional": {
+      "": []
+    },
+    "Seguridad Física": {
+      "": []
+    },
+    "Seguridad Industrial": {
+      "": []
+    }
+  },
+  "Operaciones Agrícolas": {
+    "": {
+      "": []
+    },
+    "Corte, Alce y Transporte": {
+      "": [
+        "Corte mecanizado Administración",
+        "Muestreadores"
+      ],
+      "Corte (Manual y Mecanizado)": [
+        "Corte manual Administración",
+        "Corte mecanizado Administración",
+        "Frente 1 (Tarros)",
+        "Frente 14 (Manual)",
+        "Frente 15",
+        "Frente 16",
+        "Frente 17",
+        "Frente 19",
+        "Frente 23",
+        "Frente 25"
+      ],
+      "Planificación y Operación del CAT": [],
+      "Transporte": [
+        "Patio Intercambio",
+        "Transporte Administración"
+      ]
+    },
+    "Cultivo": {
+      "": [],
+      "Aplicación de agroinsumos": [],
+      "Manejo Integrado de Plagas": [
+        "Laboratorios",
+        "Manejo Integrado de Plagas Administración"
+      ],
+      "Maquinaria de Cultivo": [
+        "Adecuación de suelos",
+        "Administración San Luis",
+        "Levante de la plantación",
+        "Preparación de suelos",
+        "Resiembra Semimecánica",
+        "Siembra Mecanizada"
+      ],
+      "Riegos": [],
+      "Zonas de Producción - Zona 1": [
+        "Administración Belén",
+        "Administración La Confianza",
+        "Administración Tarros",
+        "Administración Tehuantepec"
+      ],
+      "Zonas de Producción - Zona 2": [
+        "Administración La Coqueta",
+        "Administración Margaritas",
+        "Administración Montealegre",
+        "Administración San Luis"
+      ],
+      "Zonas de Producción - Zona 3": [
+        "Administración Carrizal",
+        "Administración La Sierra",
+        "Administración San Miguel Mapan",
+        "Administración Sololá",
+        "Zona 4"
+      ]
+    },
+    "Investigación Agricola": {
+      "": [
+        "Producción de Semilla"
+      ],
+      "Investigación Agrícola": [
+        "Producción de Semilla"
+      ]
+    },
+    "Negocios de Caña": {
+      "": []
+    },
+    "Taller": {
+      "": [],
+      "Geomática": [],
+      "Taller Agrícola": [
+        "Area Agricola",
+        "Equipos de riego",
+        "Implementos agricolas",
+        "Implementos de Riego",
+        "Mantenimiento preventivo Agricola",
+        "Maquinaria pesada",
+        "Talleres fincas",
+        "Tornos",
+        "Tractores Agricolas"
+      ],
+      "Taller Automotríz": [
+        "Arrastre",
+        "Buses y camiones",
+        "Cabezales",
+        "Lavado",
+        "Lavado de equipos",
+        "Llantas",
+        "Mecánicos de rodaje",
+        "Recepción y control de calidad",
+        "Vehiculos Livianos"
+      ],
+      "Taller Torre de Control": [],
+      "Taller de Alce y Cosecha": [
+        "Electromecanicos",
+        "Frente 14",
+        "Frente 15",
+        "Frente 16",
+        "Frente 17",
+        "Frente 19",
+        "Frente 23",
+        "Frente 25",
+        "Frente siembra",
+        "Labores de cultivo y suelos",
+        "Taller central cosecha",
+        "Turnos de cosecha"
+      ],
+      "Taller de Riegos": []
+    }
+  },
+  "Producción de Edulcorantes": {
+    "": {
+      "": []
+    },
+    "Administración Fábrica": {
+      "": []
+    },
+    "Electricidad e Instrumentación": {
+      "": [],
+      "Electricidad": [],
+      "Instrumentación": []
+    },
+    "Extracción y Molienda": {
+      "": [],
+      "Mantenimiento Maquinaria": [
+        "Transmisiones Mecanicas"
+      ],
+      "Operación Extracción y Molienda": [
+        "Molinos A",
+        "Molinos B",
+        "Patio A",
+        "Patio B"
+      ]
+    },
+    "Fabricación": {
+      "": [],
+      "Recuperación de Sacarosa": [
+        "Envasado fábrica",
+        "Tachos"
+      ],
+      "Refinería": [
+        "Maduración y envasado",
+        "Maduración y envasado refinería",
+        "Recuperación de sacarosa",
+        "Tratamiento de licor"
+      ],
+      "Tratamiento de jugo": [
+        "Clarificación",
+        "Evaporación"
+      ]
+    },
+    "Generación de Energía": {
+      "": [],
+      "Mantenimiento Generación": [],
+      "Operación Generación": [],
+      "Sistema de aguas y combustibles": []
+    },
+    "Investigación & Desarrollo": {
+      "": []
+    },
+    "Mantenimiento": {
+      "": [],
+      "Mantenimiento Mecánico": [],
+      "Mantenimiento Predictivo": [],
+      "Mantenimiento Soldadores": [
+        "Proyectos de Inversion"
+      ],
+      "Mantenimiento de Infraestructura": [
+        "Mantenimiento e infraestructura"
+      ],
+      "Máquinas y herramientas": [],
+      "Planificación y Control de Mantenimiento": []
+    }
+  },
+  "Tecnología de la Información": {
+    "": {
+      "": []
+    },
+    "Gestión de Proyectos de Tecnología": {
+      "": []
+    },
+    "Operaciones de Tecnología": {
+      "": []
+    },
+    "Soporte": {
+      "": []
+    }
+  }
+};
+
+export const RIESGOS: Record<string, string[]> = {
+  "Mecánicos": [
+    "Caída al mismo o diferente nivel",
+    "Contacto con superficies filosas",
+    "Contacto con superficies calientes",
+    "Choque o volcadura",
+    "Atropellamiento",
+    "Proyección de fragmentos o partículas",
+    "Pisada de objetos",
+    "Aplastamiento",
+    "Atrapamiento en, por, entre",
+    "Golpeado (contra, y por)",
+    "Caída de objeto"
+  ],
+  "Físicos": [
+    "Exposición a ruido",
+    "Exposición a vibración mano brazo",
+    "Exposición a vibración de cuerpo entero",
+    "Exposición a temperatura extrema por calor",
+    "Exposición a temperatura extrema por frío",
+    "Exposición a radiaciones ionizantes",
+    "Exposición a radiaciones no ionizantes",
+    "Iluminación"
+  ],
+  "Eléctricos": [
+    "Contacto directo con partes energizadas",
+    "Contacto indirecto con partes energizadas"
+  ],
+  "Químicos": [
+    "Deficiencia de oxígeno (Atmósferas peligrosas en espacios confinados, inmersión en un medio líquido)",
+    "Contacto con sustancias químicas líquidas o sólidas",
+    "Contacto con material particulado (polvos orgánicos, inorgánicos, humos metálicos y no metálicos, fibras, nieblas y rocíos)",
+    "Contacto con gases y vapores"
+  ],
+  "Biológicos": [
+    "Transmisión de persona a persona",
+    "Transmisión de animal a persona (Vectores)",
+    "Transmisión de animal a persona (zoonosis). Como por ejemplo: Animales domésticos y silvestres",
+    "Transmisión de Zootoxina (Picaduras de insectos)",
+    "Transmisión de Zootoxina (Mordedura de serpiente)",
+    "Transmisión por manipulación de objetos y materiales contaminados"
+  ],
+  "Ergonómicos": [
+    "Levantamiento manual de cargas",
+    "Transporte de cargas",
+    "Empuje y tracción de cargas",
+    "Movimiento repetitivo de la extremidad superior",
+    "Posturas forzadas y movimientos forzados",
+    "Uso de pantalla de visualización de datos"
+  ],
+  "Locativos": [
+    "Deficiencia de infraestructura (colapso estructural)",
+    "Deficiencia organizativa del lugar de trabajo",
+    "Deslizamiento, Derrumbe",
+    "Fuego o explosión",
+    "Condiciones generales de los locales y ambiente de trabajo"
+  ],
+  "Psicosociales": [
+    "Demandas de trabajo",
+    "Doble presencia",
+    "Control sobre el trabajo",
+    "Apoyo social y calidad de liderazgo",
+    "Roles y expectativas",
+    "Trabajo remoto y aislado",
+    "Relaciones laborales",
+    "Sobrecarga de trabajo cuantitativa",
+    "Sobrecarga de trabajo cualitativa",
+    "Entorno de trabajo, equipos y tareas peligrosas"
+  ]
+};
+
+export const TIPOS_REPORTE = ['Acto inseguro', 'Condición insegura'] as const;
+export const SEVERIDADES = ['Bajo', 'Medio', 'Alto'] as const;
+
+</script>
+<script type="text/plain" data-archivo="api.ts">
+// Cliente HTTP al backend de la app. El transporte (fetch + cookies MIAM +
+// errores) vive en @launion/miam-appstore-sdk.
+
+import { createClient } from '@launion/miam-appstore-sdk';
+import type { User } from '@launion/miam-appstore-sdk';
+
+// `BASE_URL` es `/apps/<slug>/static/` (sale del manifest); la API vive al lado.
+const API_BASE = import.meta.env.BASE_URL.replace(/\/static\/?$/, '/api');
+const api = createClient(API_BASE);
+
+// --- Caché local mínima, para que la app abra sin señal --------------------
+// Solo datos del propio usuario (quién es, su rol, sus reportes). Si el
+// navegador no deja guardar, la app sigue funcionando en línea.
+
+function leerCache<T>(clave: string): T | null {
+  try {
+    const crudo = window.localStorage.getItem('actos-inseguros:' + clave);
+    return crudo ? (JSON.parse(crudo) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function escribirCache(clave: string, valor: unknown): void {
+  try {
+    window.localStorage.setItem('actos-inseguros:' + clave, JSON.stringify(valor));
+  } catch {
+    // Sin almacenamiento: no pasa nada, solo no habrá modo sin señal.
+  }
+}
+
+/** ¿El error es de red (sin señal) y no una respuesta del servidor? */
+export function esErrorDeRed(err: unknown): boolean {
+  const status = (err as { status?: number } | null)?.status;
+  return typeof status !== 'number' || status === 0;
+}
+
+async function conCache<T>(clave: string, pedir: () => Promise<T>): Promise<T> {
+  try {
+    const valor = await pedir();
+    escribirCache(clave, valor);
+    return valor;
+  } catch (err) {
+    const guardado = leerCache<T>(clave);
+    if (esErrorDeRed(err) && guardado !== null) return guardado;
+    throw err;
+  }
+}
+
+/** Usuario para `<AppStoreProvider>`. Sin señal, el último que entró. */
+export function fetchMe(): Promise<User> {
+  return conCache('me', () => api.get<User>('/me'));
+}
+
+// --- Tipos ------------------------------------------------------------------
+
+export type Perfil = {
+  es_seguridad: boolean;
+  encargado_de: { gerencia: string; area: string }[];
+};
+
+export type ReporteNuevo = {
+  client_id: string;
+  tipo: string;
+  fecha: string;
+  hora: string;
+  gerencia: string;
+  area: string;
+  proceso: string;
+  subproceso: string;
+  lugar: string;
+  tipo_riesgo: string;
+  riesgo: string;
+  descripcion: string;
+  severidad: string;
+  codigo_maquina: string;
+  foto: string | null;
+};
+
+export type Evento = {
+  accion: string;
+  detalle: string;
+  usuario_nombre: string;
+  created_at: string;
+};
+
+export type Reporte = Omit<ReporteNuevo, 'foto'> & {
+  id: number;
+  reporta_nombre: string;
+  reporta_correo: string;
+  es_mio: boolean;
+  estado: string;
+  validacion_comentario: string;
+  validado_por: string;
+  validado_at: string | null;
+  plan_accion: string;
+  plan_responsable: string;
+  plan_fecha: string | null;
+  plan_por: string;
+  plan_at: string | null;
+  cierre_comentario: string;
+  cerrado_por: string;
+  cerrado_at: string | null;
+  vencido: boolean;
+  created_at: string;
+  fotos: string[];
+  eventos: Evento[];
+  puede_validar: boolean;
+  puede_gestionar: boolean;
+};
+
+export type Conteo = { nombre: string; total: number };
+
+export type Dashboard = {
+  total: number;
+  abiertos: number;
+  cerrados: number;
+  vencidos: number;
+  porcentaje_cierre: number;
+  dias_promedio_cierre: number | null;
+  por_estado: Conteo[];
+  por_tipo: Conteo[];
+  por_severidad: Conteo[];
+  por_gerencia: (Conteo & { abiertos: number })[];
+  por_riesgo: Conteo[];
+  tendencia: { semana: string; actos: number; condiciones: number }[];
+};
+
+export type Asignacion = {
+  id: number;
+  correo: string;
+  nombre: string;
+  rol: 'seguridad' | 'encargado';
+  gerencia: string;
+  area: string;
+  creado_por: string;
+  created_at: string;
+};
+
+// --- Llamadas ---------------------------------------------------------------
+
+export function fetchPerfil(): Promise<Perfil> {
+  return conCache('perfil', () => api.get<Perfil>('/perfil'));
+}
+
+export function enviarReporte(r: ReporteNuevo): Promise<Reporte> {
+  return api.post<Reporte>('/reportes', r);
+}
+
+export function fetchMisReportes(): Promise<Reporte[]> {
+  return conCache('mis-reportes', () => api.get<Reporte[]>('/reportes?vista=mios'));
+}
+
+export function fetchBandeja(): Promise<Reporte[]> {
+  return api.get<Reporte[]>('/reportes?vista=bandeja');
+}
+
+export function fetchReporte(id: number): Promise<Reporte> {
+  return api.get<Reporte>(`/reportes/${id}`);
+}
+
+export function fotoUrl(id: number, tipo: string): string {
+  // La vista previa (sin servidor) inyecta sus fotos por este gancho.
+  const previa = (window as unknown as { RadiaFotoUrl?: (id: number, tipo: string) => string })
+    .RadiaFotoUrl;
+  return previa ? previa(id, tipo) : `${API_BASE}/reportes/${id}/fotos/${tipo}`;
+}
+
+export function validarReporte(id: number, aprobado: boolean, comentario: string) {
+  return api.post<Reporte>(`/reportes/${id}/validacion`, { aprobado, comentario });
+}
+
+export function registrarPlan(
+  id: number,
+  plan: { accion: string; responsable: string; fecha_compromiso: string },
+) {
+  return api.post<Reporte>(`/reportes/${id}/plan`, plan);
+}
+
+export function cerrarReporte(id: number, comentario: string, foto: string | null) {
+  return api.post<Reporte>(`/reportes/${id}/cierre`, { comentario, foto });
+}
+
+export function fetchDashboard(filtros: {
+  desde?: string;
+  hasta?: string;
+  gerencia?: string;
+}): Promise<Dashboard> {
+  const q = new URLSearchParams();
+  Object.entries(filtros).forEach(([k, v]) => {
+    if (v) q.set(k, v);
+  });
+  const qs = q.toString();
+  return api.get<Dashboard>('/dashboard' + (qs ? '?' + qs : ''));
+}
+
+export function fetchAsignaciones(): Promise<Asignacion[]> {
+  return api.get<Asignacion[]>('/asignaciones');
+}
+
+export function crearAsignacion(a: {
+  correo: string;
+  nombre: string;
+  rol: string;
+  gerencia: string;
+  area: string;
+}): Promise<Asignacion> {
+  return api.post<Asignacion>('/asignaciones', a);
+}
+
+export function borrarAsignacion(id: number): Promise<null> {
+  return api.del<null>(`/asignaciones/${id}`);
+}
+
+</script>
+<script type="text/plain" data-archivo="offline.ts">
+// Bandeja de salida para reportar sin señal.
+//
+// Todo reporte se guarda primero aquí (IndexedDB del teléfono) y después se
+// intenta enviar. Si no hay señal queda pendiente y se reenvía solo al volver
+// la conexión. El `client_id` hace que un reenvío nunca cree un duplicado.
+
+import { enviarReporte, esErrorDeRed, type Reporte, type ReporteNuevo } from './api';
+
+export type Pendiente = {
+  client_id: string;
+  body: ReporteNuevo;
+  guardado: string;
+  /** Rechazo del servidor que reintentar no arregla (dato inválido). */
+  error?: string;
+};
+
+const DB_NOMBRE = 'actos-inseguros';
+const STORE = 'pendientes';
+let memoria: Pendiente[] = []; // respaldo si el navegador no tiene IndexedDB
+
+function abrir(): Promise<IDBDatabase | null> {
+  return new Promise((ok) => {
+    try {
+      if (!('indexedDB' in window)) return ok(null);
+      const req = window.indexedDB.open(DB_NOMBRE, 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore(STORE, { keyPath: 'client_id' });
+      };
+      req.onsuccess = () => ok(req.result);
+      req.onerror = () => ok(null);
+    } catch {
+      ok(null);
+    }
+  });
+}
+
+async function conStore<T>(
+  modo: IDBTransactionMode,
+  fn: (s: IDBObjectStore) => IDBRequest<T>,
+  respaldo: () => T,
+): Promise<T> {
+  const db = await abrir();
+  if (!db) return respaldo();
+  return new Promise((ok, falla) => {
+    const req = fn(db.transaction(STORE, modo).objectStore(STORE));
+    req.onsuccess = () => ok(req.result);
+    req.onerror = () => falla(req.error);
+  });
+}
+
+export async function listarPendientes(): Promise<Pendiente[]> {
+  const todos = await conStore<Pendiente[]>(
+    'readonly',
+    (s) => s.getAll() as IDBRequest<Pendiente[]>,
+    () => memoria.slice(),
+  );
+  return todos.sort((a, b) => a.guardado.localeCompare(b.guardado));
+}
+
+export async function guardarPendiente(p: Pendiente): Promise<void> {
+  await conStore<IDBValidKey>(
+    'readwrite',
+    (s) => s.put(p),
+    () => {
+      memoria = [...memoria.filter((x) => x.client_id !== p.client_id), p];
+      return p.client_id;
+    },
+  );
+}
+
+export async function descartarPendiente(clientId: string): Promise<void> {
+  await conStore<undefined>(
+    'readwrite',
+    (s) => s.delete(clientId) as IDBRequest<undefined>,
+    () => {
+      memoria = memoria.filter((x) => x.client_id !== clientId);
+      return undefined;
+    },
+  );
+}
+
+export function nuevoClientId(): string {
+  const c = (window as { crypto?: Crypto }).crypto;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  return 'r-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
+let enCurso: Promise<Reporte[]> | null = null;
+
+/** Envía lo pendiente. Devuelve los reportes que llegaron al servidor. */
+export function sincronizar(): Promise<Reporte[]> {
+  if (enCurso) return enCurso;
+  enCurso = (async () => {
+    const enviados: Reporte[] = [];
+    for (const p of await listarPendientes()) {
+      if (p.error) continue;
+      try {
+        enviados.push(await enviarReporte(p.body));
+        await descartarPendiente(p.client_id);
+      } catch (err) {
+        const status = (err as { status?: number }).status;
+        // Sin señal, sesión vencida o servidor caído: se reintenta después.
+        if (esErrorDeRed(err) || status === 401 || status === 429 || (status ?? 0) >= 500) {
+          break;
+        }
+        await guardarPendiente({ ...p, error: (err as Error).message });
+      }
+    }
+    return enviados;
+  })().finally(() => {
+    enCurso = null;
+  });
+  return enCurso;
+}
+
+</script>
+<script type="text/plain" data-archivo="App.tsx">
+// Reporte de Actos y Condiciones Inseguras — Ingenio La Unión.
+// Pantallas: Reportar (funciona sin señal), Mis reportes, Bandeja, Dashboard
+// y Configuración (roles). Quién ve qué lo decide el backend con /perfil.
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AppStoreProvider, useUserState } from '@launion/miam-appstore-sdk';
+import {
+  borrarAsignacion,
+  cerrarReporte,
+  crearAsignacion,
+  fetchAsignaciones,
+  fetchBandeja,
+  fetchDashboard,
+  fetchMe,
+  fetchMisReportes,
+  fetchPerfil,
+  fetchReporte,
+  fotoUrl,
+  registrarPlan,
+  validarReporte,
+  type Asignacion,
+  type Conteo,
+  type Dashboard,
+  type Perfil,
+  type Reporte,
+  type ReporteNuevo,
+} from './api';
+import { JERARQUIA, RIESGOS, SEVERIDADES, TIPOS_REPORTE } from './catalogo';
+import {
+  descartarPendiente,
+  guardarPendiente,
+  listarPendientes,
+  nuevoClientId,
+  sincronizar,
+  type Pendiente,
+} from './offline';
+
+// ---------------------------------------------------------------------------
+// Utilidades
+// ---------------------------------------------------------------------------
+
+const NA = '__no_aplica__';
+
+function dosDigitos(n: number): string {
+  return String(n).padStart(2, '0');
+}
+function hoyLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${dosDigitos(d.getMonth() + 1)}-${dosDigitos(d.getDate())}`;
+}
+function horaLocal(): string {
+  const d = new Date();
+  return `${dosDigitos(d.getHours())}:${dosDigitos(d.getMinutes())}`;
+}
+function fechaCorta(iso: string): string {
+  const [a, m, d] = iso.slice(0, 10).split('-');
+  return `${d}/${m}/${a}`;
+}
+function fechaHora(iso: string): string {
+  return new Date(iso).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' });
+}
+function mensaje(err: unknown): string {
+  return (err as Error)?.message || 'Ocurrió un error.';
+}
+
+/** Reduce la foto en el teléfono (máx. 1280 px, JPG) para que viaje liviana. */
+function comprimirFoto(archivo: File): Promise<string> {
+  return new Promise((ok, falla) => {
+    const lector = new FileReader();
+    lector.onerror = () => falla(new Error('No se pudo leer la foto.'));
+    lector.onload = () => {
+      const img = new Image();
+      img.onerror = () => falla(new Error('El archivo no es una imagen válida.'));
+      img.onload = () => {
+        const escala = Math.min(1, 1280 / Math.max(img.width, img.height));
+        const lienzo = document.createElement('canvas');
+        lienzo.width = Math.round(img.width * escala);
+        lienzo.height = Math.round(img.height * escala);
+        const ctx = lienzo.getContext('2d');
+        if (!ctx) return ok(String(lector.result));
+        ctx.drawImage(img, 0, 0, lienzo.width, lienzo.height);
+        ok(lienzo.toDataURL('image/jpeg', 0.72));
+      };
+      img.src = String(lector.result);
+    };
+    lector.readAsDataURL(archivo);
+  });
+}
+
+function useEnLinea(): boolean {
+  const [enLinea, setEnLinea] = useState(navigator.onLine);
+  useEffect(() => {
+    const si = () => setEnLinea(true);
+    const no = () => setEnLinea(false);
+    window.addEventListener('online', si);
+    window.addEventListener('offline', no);
+    return () => {
+      window.removeEventListener('online', si);
+      window.removeEventListener('offline', no);
+    };
+  }, []);
+  return enLinea;
+}
+
+const CLASE_ESTADO: Record<string, string> = {
+  Reportado: 'e-reportado',
+  Validado: 'e-validado',
+  Rechazado: 'e-rechazado',
+  'En plan de acción': 'e-plan',
+  Cerrado: 'e-cerrado',
+};
+
+function Estado({ r }: { r: Pick<Reporte, 'estado' | 'vencido'> }) {
+  return (
+    <span className="chips">
+      <span className={'chip ' + (CLASE_ESTADO[r.estado] ?? '')}>{r.estado}</span>
+      {r.vencido && <span className="chip e-vencido">⚠ Vencido</span>}
+    </span>
+  );
+}
+
+function Severidad({ valor }: { valor: string }) {
+  return <span className={'sev sev-' + valor.toLowerCase()}>{valor}</span>;
+}
+
+// ---------------------------------------------------------------------------
+// Selects en cascada (Gerencia → Área → Proceso → Sub proceso)
+// ---------------------------------------------------------------------------
+
+function SelectNivel(props: {
+  etiqueta: string;
+  opciones: string[];
+  valor: string;
+  onChange: (v: string) => void;
+  requerido?: boolean;
+  deshabilitado?: boolean;
+}) {
+  const reales = props.opciones.filter((o) => o !== '');
+  const permiteNA = props.opciones.includes('') || !props.requerido;
+  return (
+    <label className="campo">
+      <span>
+        {props.etiqueta}
+        {props.requerido && <b className="req"> *</b>}
+      </span>
+      <select
+        value={props.valor}
+        disabled={props.deshabilitado}
+        onChange={(e) => props.onChange(e.target.value)}
+      >
+        {props.requerido ? (
+          <option value="">Selecciona…</option>
+        ) : (
+          <option value="">— No aplica —</option>
+        )}
+        {props.requerido && permiteNA && <option value={NA}>No aplica</option>}
+        {reales.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function opcionesArea(gerencia: string): string[] {
+  return gerencia ? Object.keys(JERARQUIA[gerencia] ?? {}) : [];
+}
+function opcionesProceso(gerencia: string, area: string): string[] {
+  const a = area === NA ? '' : area;
+  return gerencia && area ? Object.keys(JERARQUIA[gerencia]?.[a] ?? {}) : [];
+}
+function opcionesSub(gerencia: string, area: string, proceso: string): string[] {
+  const a = area === NA ? '' : area;
+  return gerencia && area ? (JERARQUIA[gerencia]?.[a]?.[proceso] ?? []) : [];
+}
+
+// ---------------------------------------------------------------------------
+// Reportar
+// ---------------------------------------------------------------------------
+
+type Borrador = Omit<ReporteNuevo, 'client_id' | 'tipo_riesgo' | 'riesgo' | 'foto'> & {
+  riesgoSel: string;
+};
+
+function borradorVacio(previo?: Borrador): Borrador {
+  return {
+    tipo: '',
+    fecha: hoyLocal(),
+    hora: horaLocal(),
+    gerencia: previo?.gerencia ?? '',
+    area: previo?.area ?? '',
+    proceso: previo?.proceso ?? '',
+    subproceso: previo?.subproceso ?? '',
+    lugar: '',
+    riesgoSel: '',
+    descripcion: '',
+    severidad: '',
+    codigo_maquina: '',
+  };
+}
+
+function FormularioReporte({
+  nombre,
+  enLinea,
+  onGuardado,
+}: {
+  nombre: string;
+  enLinea: boolean;
+  onGuardado: () => void;
+}) {
+  const [b, setB] = useState<Borrador>(() => borradorVacio());
+  const [foto, setFoto] = useState<string | null>(null);
+  const [procesandoFoto, setProcesandoFoto] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [aviso, setAviso] = useState<{ tipo: 'ok' | 'pendiente' | 'error'; texto: string } | null>(
+    null,
+  );
+
+  const set = (campo: keyof Borrador, valor: string) => setB((x) => ({ ...x, [campo]: valor }));
+
+  const areas = opcionesArea(b.gerencia);
+  const procesos = opcionesProceso(b.gerencia, b.area);
+  const subs = opcionesSub(b.gerencia, b.area, b.proceso);
+
+  // Si una gerencia no tiene áreas, «No aplica» queda elegido solo.
+  useEffect(() => {
+    if (b.gerencia && areas.length === 1 && areas[0] === '' && b.area !== NA) set('area', NA);
+  }, [b.gerencia, b.area, areas]);
+
+  const faltan = [
+    !b.tipo && 'Tipo de reporte',
+    !b.fecha && 'Fecha',
+    !b.hora && 'Hora',
+    !b.gerencia && 'Gerencia',
+    !b.area && 'Área',
+    !b.lugar.trim() && 'Lugar',
+    !b.riesgoSel && 'Riesgo identificado',
+    !b.descripcion.trim() && 'Descripción',
+    !b.severidad && 'Potencial de severidad',
+  ].filter(Boolean) as string[];
+
+  async function elegirFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivo = e.target.files?.[0];
+    e.target.value = '';
+    if (!archivo) return;
+    setProcesandoFoto(true);
+    try {
+      setFoto(await comprimirFoto(archivo));
+    } catch (err) {
+      setAviso({ tipo: 'error', texto: mensaje(err) });
+    } finally {
+      setProcesandoFoto(false);
+    }
+  }
+
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    if (faltan.length) {
+      setAviso({ tipo: 'error', texto: 'Falta completar: ' + faltan.join(', ') + '.' });
+      return;
+    }
+    const [tipoRiesgo, riesgo] = b.riesgoSel.split('||');
+    const body: ReporteNuevo = {
+      client_id: nuevoClientId(),
+      tipo: b.tipo,
+      fecha: b.fecha,
+      hora: b.hora,
+      gerencia: b.gerencia,
+      area: b.area === NA ? '' : b.area,
+      proceso: b.proceso,
+      subproceso: b.subproceso,
+      lugar: b.lugar.trim(),
+      tipo_riesgo: tipoRiesgo,
+      riesgo,
+      descripcion: b.descripcion.trim(),
+      severidad: b.severidad,
+      codigo_maquina: b.codigo_maquina.trim(),
+      foto,
+    };
+    setGuardando(true);
+    setAviso(null);
+    try {
+      // Primero al teléfono: así no se pierde aunque se corte la señal a medias.
+      await guardarPendiente({ client_id: body.client_id, body, guardado: new Date().toISOString() });
+      const enviados = await sincronizar();
+      const mio = enviados.find((r) => r.client_id === body.client_id);
+      if (mio) {
+        setAviso({ tipo: 'ok', texto: `Reporte #${mio.id} enviado. ¡Gracias por reportar!` });
+      } else {
+        const p = (await listarPendientes()).find((x) => x.client_id === body.client_id);
+        if (p?.error) setAviso({ tipo: 'error', texto: p.error });
+        else
+          setAviso({
+            tipo: 'pendiente',
+            texto: 'Sin señal: el reporte quedó guardado en este teléfono y se enviará solo al volver la conexión.',
+          });
+      }
+      setB((x) => borradorVacio(x));
+      setFoto(null);
+      onGuardado();
+    } catch (err) {
+      setAviso({ tipo: 'error', texto: mensaje(err) });
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <form className="card formulario" onSubmit={enviar} noValidate>
+      <h2>Nuevo reporte</h2>
+      {!enLinea && (
+        <p className="banda banda-offline">
+          Estás sin señal. Puedes llenar el reporte: se guarda en el teléfono y se envía solo.
+        </p>
+      )}
+
+      <fieldset className="campo">
+        <span>
+          Tipo de reporte<b className="req"> *</b>
+        </span>
+        <div className="segmentado">
+          {TIPOS_REPORTE.map((t) => (
+            <button
+              type="button"
+              key={t}
+              className={b.tipo === t ? 'activo' : ''}
+              onClick={() => set('tipo', t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="fila">
+        <label className="campo">
+          <span>
+            Fecha<b className="req"> *</b>
+          </span>
+          <input type="date" value={b.fecha} max={hoyLocal()} onChange={(e) => set('fecha', e.target.value)} />
+        </label>
+        <label className="campo">
+          <span>
+            Hora<b className="req"> *</b>
+          </span>
+          <input type="time" value={b.hora} onChange={(e) => set('hora', e.target.value)} />
+        </label>
+      </div>
+
+      <SelectNivel
+        etiqueta="Gerencia"
+        requerido
+        opciones={Object.keys(JERARQUIA)}
+        valor={b.gerencia}
+        onChange={(v) => setB((x) => ({ ...x, gerencia: v, area: '', proceso: '', subproceso: '' }))}
+      />
+      <SelectNivel
+        etiqueta="Área"
+        requerido
+        opciones={areas}
+        valor={b.area}
+        deshabilitado={!b.gerencia}
+        onChange={(v) => setB((x) => ({ ...x, area: v, proceso: '', subproceso: '' }))}
+      />
+      <div className="fila">
+        <SelectNivel
+          etiqueta="Proceso"
+          opciones={procesos}
+          valor={b.proceso}
+          deshabilitado={!procesos.some((p) => p)}
+          onChange={(v) => setB((x) => ({ ...x, proceso: v, subproceso: '' }))}
+        />
+        <SelectNivel
+          etiqueta="Sub proceso"
+          opciones={subs}
+          valor={b.subproceso}
+          deshabilitado={!subs.length}
+          onChange={(v) => set('subproceso', v)}
+        />
+      </div>
+
+      <label className="campo">
+        <span>¿Quién reporta?</span>
+        <input value={nombre} disabled />
+      </label>
+
+      <label className="campo">
+        <span>
+          Lugar<b className="req"> *</b>
+        </span>
+        <input
+          value={b.lugar}
+          maxLength={200}
+          placeholder="Ej.: escalera del tacho 3, lote 12 de Finca Tarros"
+          onChange={(e) => set('lugar', e.target.value)}
+        />
+      </label>
+
+      <label className="campo">
+        <span>
+          Riesgo identificado<b className="req"> *</b>
+        </span>
+        <select value={b.riesgoSel} onChange={(e) => set('riesgoSel', e.target.value)}>
+          <option value="">Selecciona…</option>
+          {Object.entries(RIESGOS).map(([tipo, lista]) => (
+            <optgroup key={tipo} label={tipo}>
+              {lista.map((r) => (
+                <option key={r} value={`${tipo}||${r}`}>
+                  {r}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+
+      <label className="campo">
+        <span>
+          Descripción<b className="req"> *</b>
+        </span>
+        <textarea
+          rows={4}
+          maxLength={5000}
+          value={b.descripcion}
+          placeholder="¿Qué viste? ¿Qué podría pasar?"
+          onChange={(e) => set('descripcion', e.target.value)}
+        />
+      </label>
+
+      <fieldset className="campo">
+        <span>
+          Potencial de severidad<b className="req"> *</b>
+        </span>
+        <div className="segmentado">
+          {SEVERIDADES.map((s) => (
+            <button
+              type="button"
+              key={s}
+              className={(b.severidad === s ? 'activo ' : '') + 'sevbtn-' + s.toLowerCase()}
+              onClick={() => set('severidad', s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <label className="campo">
+        <span>Código de la máquina involucrada (si aplica)</span>
+        <input
+          value={b.codigo_maquina}
+          maxLength={60}
+          onChange={(e) => set('codigo_maquina', e.target.value)}
+        />
+      </label>
+
+      <div className="campo">
+        <span>Foto</span>
+        {foto ? (
+          <div className="foto-previa">
+            <img src={foto} alt="Foto del reporte" />
+            <button type="button" className="secundario" onClick={() => setFoto(null)}>
+              Quitar foto
+            </button>
+          </div>
+        ) : (
+          <label className="boton-foto">
+            {procesandoFoto ? 'Procesando…' : '📷 Tomar o adjuntar foto'}
+            <input type="file" accept="image/*" capture="environment" onChange={elegirFoto} hidden />
+          </label>
+        )}
+      </div>
+
+      {aviso && <p className={'aviso aviso-' + aviso.tipo}>{aviso.texto}</p>}
+
+      <button type="submit" className="primario grande" disabled={guardando || procesandoFoto}>
+        {guardando ? 'Enviando…' : 'Enviar reporte'}
+      </button>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Listas
+// ---------------------------------------------------------------------------
+
+function TarjetaReporte({ r, onAbrir }: { r: Reporte; onAbrir: (id: number) => void }) {
+  return (
+    <button type="button" className="tarjeta" onClick={() => onAbrir(r.id)}>
+      <div className="tarjeta-cab">
+        <strong>
+          #{r.id} · {r.tipo}
+        </strong>
+        <Estado r={r} />
+      </div>
+      <div className="tarjeta-desc">{r.descripcion}</div>
+      <div className="tarjeta-pie">
+        <Severidad valor={r.severidad} />
+        <span>
+          {fechaCorta(r.fecha)} {r.hora}
+        </span>
+        <span>{r.area || r.gerencia}</span>
+        <span>{r.lugar}</span>
+      </div>
+    </button>
+  );
+}
+
+function MisReportes({
+  pendientes,
+  version,
+  onAbrir,
+  onCambio,
+}: {
+  pendientes: Pendiente[];
+  version: number;
+  onAbrir: (id: number) => void;
+  onCambio: () => void;
+}) {
+  const [lista, setLista] = useState<Reporte[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchMisReportes()
+      .then((x) => {
+        setLista(x);
+        setError(null);
+      })
+      .catch((e) => setError(mensaje(e)));
+  }, [version]);
+
+  return (
+    <section>
+      {pendientes.length > 0 && (
+        <div className="card">
+          <h2>Pendientes de enviar ({pendientes.length})</h2>
+          <p className="hint">Están guardados en este teléfono. Se envían solos al tener señal.</p>
+          {pendientes.map((p) => (
+            <div key={p.client_id} className="pendiente">
+              <div>
+                <strong>{p.body.tipo}</strong> · {p.body.lugar}
+                <div className="hint">Guardado {fechaHora(p.guardado)}</div>
+                {p.error && <div className="error">No se pudo enviar: {p.error}</div>}
+              </div>
+              {p.error && (
+                <button
+                  type="button"
+                  className="secundario"
+                  onClick={() => descartarPendiente(p.client_id).then(onCambio)}
+                >
+                  Descartar
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <h2>Mis reportes</h2>
+      {error && <p className="error">No se pudieron cargar: {error}</p>}
+      {lista === null && !error && <p className="hint">Cargando…</p>}
+      {lista?.length === 0 && (
+        <p className="vacio">Todavía no has enviado reportes. Cada reporte ayuda a prevenir un accidente.</p>
+      )}
+      <div className="lista">
+        {lista?.map((r) => (
+          <TarjetaReporte key={r.id} r={r} onAbrir={onAbrir} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const FILTROS_BANDEJA: { clave: string; etiqueta: string; f: (r: Reporte) => boolean }[] = [
+  { clave: 'validar', etiqueta: 'Por validar', f: (r) => r.estado === 'Reportado' },
+  { clave: 'plan', etiqueta: 'Sin plan', f: (r) => r.estado === 'Validado' },
+  { clave: 'curso', etiqueta: 'En plan', f: (r) => r.estado === 'En plan de acción' },
+  { clave: 'vencidos', etiqueta: 'Vencidos', f: (r) => r.vencido },
+  { clave: 'cerrados', etiqueta: 'Cerrados', f: (r) => r.estado === 'Cerrado' },
+  { clave: 'rechazados', etiqueta: 'Rechazados', f: (r) => r.estado === 'Rechazado' },
+  { clave: 'todos', etiqueta: 'Todos', f: () => true },
+];
+
+function Bandeja({
+  perfil,
+  version,
+  onAbrir,
+}: {
+  perfil: Perfil;
+  version: number;
+  onAbrir: (id: number) => void;
+}) {
+  const [lista, setLista] = useState<Reporte[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState(perfil.es_seguridad ? 'validar' : 'plan');
+  const [buscar, setBuscar] = useState('');
+
+  useEffect(() => {
+    fetchBandeja()
+      .then((x) => {
+        setLista(x);
+        setError(null);
+      })
+      .catch((e) => setError(mensaje(e)));
+  }, [version]);
+
+  const f = FILTROS_BANDEJA.find((x) => x.clave === filtro) ?? FILTROS_BANDEJA[0];
+  const texto = buscar.trim().toLowerCase();
+  const visibles = (lista ?? []).filter(
+    (r) =>
+      f.f(r) &&
+      (!texto ||
+        [r.id, r.lugar, r.descripcion, r.gerencia, r.area, r.reporta_nombre, r.riesgo]
+          .join(' ')
+          .toLowerCase()
+          .includes(texto)),
+  );
+
+  return (
+    <section>
+      <h2>Bandeja</h2>
+      <p className="hint">
+        {perfil.es_seguridad
+          ? 'Como Seguridad Industrial ves los reportes de todo el ingenio.'
+          : 'Ves los reportes de: ' +
+            perfil.encargado_de.map((e) => e.area || e.gerencia + ' (toda)').join(', ')}
+      </p>
+      <div className="filtros">
+        {FILTROS_BANDEJA.map((x) => {
+          const n = (lista ?? []).filter(x.f).length;
+          return (
+            <button
+              type="button"
+              key={x.clave}
+              className={'filtro ' + (x.clave === filtro ? 'activo' : '')}
+              onClick={() => setFiltro(x.clave)}
+            >
+              {x.etiqueta} <b>{n}</b>
+            </button>
+          );
+        })}
+      </div>
+      <input
+        className="buscador"
+        placeholder="Buscar por número, lugar, área, persona…"
+        value={buscar}
+        onChange={(e) => setBuscar(e.target.value)}
+      />
+      {error && <p className="error">No se pudo cargar: {error}</p>}
+      {lista === null && !error && <p className="hint">Cargando…</p>}
+      {lista && visibles.length === 0 && <p className="vacio">No hay reportes en «{f.etiqueta}».</p>}
+      <div className="lista">
+        {visibles.map((r) => (
+          <TarjetaReporte key={r.id} r={r} onAbrir={onAbrir} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Detalle y acciones
+// ---------------------------------------------------------------------------
+
+function Dato({ k, v }: { k: string; v: string | null | undefined }) {
+  if (!v) return null;
+  return (
+    <div className="dato">
+      <dt>{k}</dt>
+      <dd>{v}</dd>
+    </div>
+  );
+}
+
+function Detalle({
+  id,
+  onCerrar,
+  onCambio,
+}: {
+  id: number;
+  onCerrar: () => void;
+  onCambio: () => void;
+}) {
+  const [r, setR] = useState<Reporte | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const [comentario, setComentario] = useState('');
+  const [plan, setPlan] = useState({ accion: '', responsable: '', fecha_compromiso: '' });
+  const [cierre, setCierre] = useState('');
+  const [fotoCierre, setFotoCierre] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchReporte(id)
+      .then((x) => {
+        setR(x);
+        setPlan({
+          accion: x.plan_accion,
+          responsable: x.plan_responsable,
+          fecha_compromiso: x.plan_fecha ?? '',
+        });
+      })
+      .catch((e) => setError(mensaje(e)));
+  }, [id]);
+
+  async function accion(fn: () => Promise<Reporte>) {
+    setOcupado(true);
+    setError(null);
+    try {
+      setR(await fn());
+      onCambio();
+    } catch (e) {
+      setError(mensaje(e));
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  return (
+    <div className="modal" role="dialog" aria-modal="true" onClick={onCerrar}>
+      <div className="modal-caja" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-cab">
+          <h2>{r ? `Reporte #${r.id}` : 'Reporte'}</h2>
+          <button type="button" className="cerrar" onClick={onCerrar} aria-label="Cerrar">
+            ✕
+          </button>
+        </div>
+        {!r && !error && <p className="hint">Cargando…</p>}
+        {error && <p className="aviso aviso-error">{error}</p>}
+        {r && (
+          <>
+            <div className="chips-fila">
+              <Estado r={r} />
+              <Severidad valor={r.severidad} />
+              <span className="chip">{r.tipo}</span>
+            </div>
+            <p className="descripcion">{r.descripcion}</p>
+            <dl className="datos">
+              <Dato k="Fecha y hora" v={`${fechaCorta(r.fecha)} ${r.hora}`} />
+              <Dato k="Gerencia" v={r.gerencia} />
+              <Dato k="Área" v={r.area} />
+              <Dato k="Proceso" v={r.proceso} />
+              <Dato k="Sub proceso" v={r.subproceso} />
+              <Dato k="Lugar" v={r.lugar} />
+              <Dato k="Riesgo" v={`${r.tipo_riesgo} — ${r.riesgo}`} />
+              <Dato k="Máquina" v={r.codigo_maquina} />
+              <Dato k="Reportó" v={r.reporta_nombre} />
+            </dl>
+            {r.fotos.includes('reporte') && (
+              <img className="foto-detalle" src={fotoUrl(r.id, 'reporte')} alt="Foto del reporte" />
+            )}
+
+            {r.estado === 'Rechazado' && (
+              <div className="bloque">
+                <h3>No procede</h3>
+                <p>{r.validacion_comentario}</p>
+                <p className="hint">— {r.validado_por}</p>
+              </div>
+            )}
+            {r.plan_accion && (
+              <div className="bloque">
+                <h3>Plan de acción</h3>
+                <p>{r.plan_accion}</p>
+                <p className="hint">
+                  Responsable: {r.plan_responsable} · Compromiso:{' '}
+                  {r.plan_fecha ? fechaCorta(r.plan_fecha) : '—'}
+                </p>
+              </div>
+            )}
+            {r.estado === 'Cerrado' && (
+              <div className="bloque bloque-ok">
+                <h3>Cierre</h3>
+                <p>{r.cierre_comentario}</p>
+                <p className="hint">
+                  — {r.cerrado_por}
+                  {r.cerrado_at && `, ${fechaHora(r.cerrado_at)}`}
+                </p>
+                {r.fotos.includes('cierre') && (
+                  <img className="foto-detalle" src={fotoUrl(r.id, 'cierre')} alt="Evidencia de cierre" />
+                )}
+              </div>
+            )}
+
+            {r.puede_validar && (
+              <div className="bloque bloque-accion">
+                <h3>Validación de Seguridad Industrial</h3>
+                <textarea
+                  rows={2}
+                  placeholder="Comentario (obligatorio si no procede)"
+                  value={comentario}
+                  onChange={(e) => setComentario(e.target.value)}
+                />
+                <div className="botones">
+                  <button
+                    type="button"
+                    className="primario"
+                    disabled={ocupado}
+                    onClick={() => accion(() => validarReporte(r.id, true, comentario))}
+                  >
+                    Validar
+                  </button>
+                  <button
+                    type="button"
+                    className="peligro"
+                    disabled={ocupado || !comentario.trim()}
+                    onClick={() => accion(() => validarReporte(r.id, false, comentario))}
+                  >
+                    No procede
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {r.puede_gestionar && (
+              <div className="bloque bloque-accion">
+                <h3>{r.estado === 'Validado' ? 'Registrar plan de acción' : 'Actualizar plan de acción'}</h3>
+                <textarea
+                  rows={3}
+                  placeholder="¿Qué se va a hacer para eliminar el riesgo?"
+                  value={plan.accion}
+                  onChange={(e) => setPlan({ ...plan, accion: e.target.value })}
+                />
+                <div className="fila">
+                  <label className="campo">
+                    <span>Responsable</span>
+                    <input
+                      value={plan.responsable}
+                      onChange={(e) => setPlan({ ...plan, responsable: e.target.value })}
+                    />
+                  </label>
+                  <label className="campo">
+                    <span>Fecha compromiso</span>
+                    <input
+                      type="date"
+                      value={plan.fecha_compromiso}
+                      onChange={(e) => setPlan({ ...plan, fecha_compromiso: e.target.value })}
+                    />
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  className="primario"
+                  disabled={
+                    ocupado || !plan.accion.trim() || !plan.responsable.trim() || !plan.fecha_compromiso
+                  }
+                  onClick={() => accion(() => registrarPlan(r.id, plan))}
+                >
+                  Guardar plan
+                </button>
+              </div>
+            )}
+
+            {r.puede_gestionar && r.estado === 'En plan de acción' && (
+              <div className="bloque bloque-accion">
+                <h3>Cerrar reporte</h3>
+                <textarea
+                  rows={2}
+                  placeholder="¿Qué se hizo? Evidencia del cierre"
+                  value={cierre}
+                  onChange={(e) => setCierre(e.target.value)}
+                />
+                {fotoCierre ? (
+                  <div className="foto-previa">
+                    <img src={fotoCierre} alt="Evidencia" />
+                    <button type="button" className="secundario" onClick={() => setFotoCierre(null)}>
+                      Quitar foto
+                    </button>
+                  </div>
+                ) : (
+                  <label className="boton-foto">
+                    📷 Foto de evidencia (opcional)
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      hidden
+                      onChange={(e) => {
+                        const a = e.target.files?.[0];
+                        e.target.value = '';
+                        if (a) comprimirFoto(a).then(setFotoCierre, (x) => setError(mensaje(x)));
+                      }}
+                    />
+                  </label>
+                )}
+                <button
+                  type="button"
+                  className="exito"
+                  disabled={ocupado || !cierre.trim()}
+                  onClick={() => accion(() => cerrarReporte(r.id, cierre, fotoCierre))}
+                >
+                  Cerrar reporte
+                </button>
+              </div>
+            )}
+
+            {r.eventos.length > 0 && (
+              <div className="bloque">
+                <h3>Historial</h3>
+                <ol className="historial">
+                  {r.eventos.map((e, i) => (
+                    <li key={i}>
+                      <strong>{e.accion}</strong> · {e.usuario_nombre}
+                      <span className="hint"> · {fechaHora(e.created_at)}</span>
+                      {e.detalle && <div>{e.detalle}</div>}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
+
+function Barras({ datos, titulo, color }: { datos: Conteo[]; titulo: string; color?: string }) {
+  const max = Math.max(1, ...datos.map((d) => d.total));
+  return (
+    <div className="card grafico">
+      <h3>{titulo}</h3>
+      {datos.length === 0 && <p className="hint">Sin datos en este periodo.</p>}
+      {datos.map((d) => (
+        <div className="barra-fila" key={d.nombre} title={`${d.nombre}: ${d.total}`}>
+          <span className="barra-etq">{d.nombre}</span>
+          <span className="barra-pista">
+            <span
+              className="barra"
+              style={{ width: `${(100 * d.total) / max}%`, background: color }}
+            />
+          </span>
+          <span className="barra-val">{d.total}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Tendencia({ datos }: { datos: Dashboard['tendencia'] }) {
+  const max = Math.max(1, ...datos.map((d) => Math.max(d.actos, d.condiciones)));
+  return (
+    <div className="card grafico">
+      <h3>Reportes por semana (últimas 12)</h3>
+      <div className="leyenda">
+        <span>
+          <i className="sw sw-1" /> Actos inseguros
+        </span>
+        <span>
+          <i className="sw sw-2" /> Condiciones inseguras
+        </span>
+      </div>
+      <div className="columnas">
+        {datos.map((d) => (
+          <div
+            className="col-grupo"
+            key={d.semana}
+            title={`Semana del ${fechaCorta(d.semana)}\nActos: ${d.actos}\nCondiciones: ${d.condiciones}`}
+          >
+            <div className="col-barras">
+              <span className="col c1" style={{ height: `${(100 * d.actos) / max}%` }} />
+              <span className="col c2" style={{ height: `${(100 * d.condiciones) / max}%` }} />
+            </div>
+            <span className="col-etq">{fechaCorta(d.semana).slice(0, 5)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashboardVista({ version }: { version: number }) {
+  const [filtros, setFiltros] = useState({ desde: '', hasta: '', gerencia: '' });
+  const [d, setD] = useState<Dashboard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [actualizado, setActualizado] = useState<Date | null>(null);
+
+  const cargar = useCallback(() => {
+    fetchDashboard(filtros)
+      .then((x) => {
+        setD(x);
+        setError(null);
+        setActualizado(new Date());
+      })
+      .catch((e) => setError(mensaje(e)));
+  }, [filtros]);
+
+  useEffect(() => {
+    cargar();
+    // «Tiempo real»: se refresca solo cada minuto mientras está abierto.
+    const t = window.setInterval(cargar, 60_000);
+    return () => window.clearInterval(t);
+  }, [cargar, version]);
+
+  return (
+    <section>
+      <div className="dash-cab">
+        <h2>Dashboard</h2>
+        {actualizado && (
+          <span className="hint">
+            Actualizado {actualizado.toLocaleTimeString('es-GT', { timeStyle: 'short' })} ·{' '}
+            <button type="button" className="enlace" onClick={cargar}>
+              actualizar
+            </button>
+          </span>
+        )}
+      </div>
+      <div className="filtros-dash">
+        <label className="campo">
+          <span>Desde</span>
+          <input
+            type="date"
+            value={filtros.desde}
+            onChange={(e) => setFiltros({ ...filtros, desde: e.target.value })}
+          />
+        </label>
+        <label className="campo">
+          <span>Hasta</span>
+          <input
+            type="date"
+            value={filtros.hasta}
+            onChange={(e) => setFiltros({ ...filtros, hasta: e.target.value })}
+          />
+        </label>
+        <label className="campo">
+          <span>Gerencia</span>
+          <select
+            value={filtros.gerencia}
+            onChange={(e) => setFiltros({ ...filtros, gerencia: e.target.value })}
+          >
+            <option value="">Todas</option>
+            {Object.keys(JERARQUIA).map((g) => (
+              <option key={g}>{g}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {error && <p className="error">No se pudo cargar: {error}</p>}
+      {d && (
+        <>
+          <div className="kpis">
+            <div className="kpi">
+              <span>Reportes</span>
+              <b>{d.total}</b>
+            </div>
+            <div className="kpi">
+              <span>Abiertos</span>
+              <b>{d.abiertos}</b>
+            </div>
+            <div className="kpi">
+              <span>Cerrados</span>
+              <b>{d.cerrados}</b>
+              <small>{d.porcentaje_cierre}% de los válidos</small>
+            </div>
+            <div className={'kpi ' + (d.vencidos ? 'kpi-alerta' : '')}>
+              <span>{d.vencidos ? '⚠ ' : ''}Planes vencidos</span>
+              <b>{d.vencidos}</b>
+            </div>
+            <div className="kpi">
+              <span>Días promedio al cierre</span>
+              <b>{d.dias_promedio_cierre ?? '—'}</b>
+            </div>
+          </div>
+          <Tendencia datos={d.tendencia} />
+          <div className="graficos">
+            <Barras titulo="Por estado" datos={d.por_estado} />
+            <Barras titulo="Actos vs. condiciones" datos={d.por_tipo} />
+            <Barras titulo="Potencial de severidad" datos={d.por_severidad} />
+            <Barras titulo="Por tipo de riesgo" datos={d.por_riesgo} />
+          </div>
+          <div className="card grafico">
+            <h3>Por gerencia</h3>
+            {d.por_gerencia.length === 0 ? (
+              <p className="hint">Sin datos en este periodo.</p>
+            ) : (
+              <table className="tabla">
+                <thead>
+                  <tr>
+                    <th>Gerencia</th>
+                    <th>Reportes</th>
+                    <th>Abiertos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.por_gerencia.map((g) => (
+                    <tr key={g.nombre}>
+                      <td>{g.nombre}</td>
+                      <td>{g.total}</td>
+                      <td>{g.abiertos}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Configuración: roles
+// ---------------------------------------------------------------------------
+
+function Configuracion({ onCambio }: { onCambio: () => void }) {
+  const [lista, setLista] = useState<Asignacion[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({ correo: '', nombre: '', rol: 'encargado', gerencia: '', area: '' });
+  const [ocupado, setOcupado] = useState(false);
+
+  const cargar = useCallback(() => {
+    fetchAsignaciones()
+      .then(setLista)
+      .catch((e) => setError(mensaje(e)));
+  }, []);
+  useEffect(cargar, [cargar]);
+
+  async function agregar(e: React.FormEvent) {
+    e.preventDefault();
+    setOcupado(true);
+    setError(null);
+    try {
+      await crearAsignacion({ ...form, area: form.area === NA ? '' : form.area });
+      setForm({ ...form, correo: '', nombre: '' });
+      cargar();
+      onCambio();
+    } catch (err) {
+      setError(mensaje(err));
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  async function quitar(a: Asignacion) {
+    if (!window.confirm(`¿Quitar el rol a ${a.nombre || a.correo}?`)) return;
+    try {
+      await borrarAsignacion(a.id);
+      cargar();
+      onCambio();
+    } catch (err) {
+      setError(mensaje(err));
+    }
+  }
+
+  const seguridad = (lista ?? []).filter((a) => a.rol === 'seguridad');
+  const encargados = (lista ?? []).filter((a) => a.rol === 'encargado');
+  const correoValido = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.correo.trim());
+
+  return (
+    <section>
+      <h2>Configuración de roles</h2>
+      <p className="hint">
+        Cualquier persona con usuario de La Unión puede reportar. Aquí se asigna quién valida
+        (Seguridad Industrial) y quién da seguimiento a los reportes de cada área (encargados).
+        El correo debe ser el mismo con el que la persona entra a Radia.
+      </p>
+
+      <form className="card" onSubmit={agregar}>
+        <h3>Asignar rol</h3>
+        <div className="fila">
+          <label className="campo">
+            <span>
+              Correo<b className="req"> *</b>
+            </span>
+            <input
+              type="email"
+              value={form.correo}
+              placeholder="nombre@launion.com.gt"
+              onChange={(e) => setForm({ ...form, correo: e.target.value })}
+            />
+          </label>
+          <label className="campo">
+            <span>Nombre</span>
+            <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
+          </label>
+        </div>
+        <label className="campo">
+          <span>Rol</span>
+          <select value={form.rol} onChange={(e) => setForm({ ...form, rol: e.target.value })}>
+            <option value="encargado">Jefe / supervisor / encargado de área</option>
+            <option value="seguridad">Seguridad Industrial (valida y administra)</option>
+          </select>
+        </label>
+        {form.rol === 'encargado' && (
+          <div className="fila">
+            <SelectNivel
+              etiqueta="Gerencia"
+              requerido
+              opciones={Object.keys(JERARQUIA)}
+              valor={form.gerencia}
+              onChange={(v) => setForm({ ...form, gerencia: v, area: '' })}
+            />
+            <label className="campo">
+              <span>Área</span>
+              <select
+                value={form.area}
+                disabled={!form.gerencia}
+                onChange={(e) => setForm({ ...form, area: e.target.value })}
+              >
+                <option value="">Toda la gerencia</option>
+                {opcionesArea(form.gerencia)
+                  .filter((a) => a)
+                  .map((a) => (
+                    <option key={a}>{a}</option>
+                  ))}
+              </select>
+            </label>
+          </div>
+        )}
+        <button
+          type="submit"
+          className="primario"
+          disabled={ocupado || !correoValido || (form.rol === 'encargado' && !form.gerencia)}
+        >
+          Asignar
+        </button>
+      </form>
+
+      {error && <p className="aviso aviso-error">{error}</p>}
+
+      <div className="card">
+        <h3>Seguridad Industrial ({seguridad.length})</h3>
+        {seguridad.map((a) => (
+          <div className="asig" key={a.id}>
+            <div>
+              <strong>{a.nombre || a.correo}</strong>
+              <div className="hint">{a.correo}</div>
+            </div>
+            <button type="button" className="secundario" onClick={() => quitar(a)}>
+              Quitar
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <h3>Encargados de área ({encargados.length})</h3>
+        {lista && encargados.length === 0 && (
+          <p className="hint">
+            Aún no hay encargados. Mientras un área no tenga encargado, sus reportes solo le
+            llegan a Seguridad Industrial.
+          </p>
+        )}
+        {encargados.map((a) => (
+          <div className="asig" key={a.id}>
+            <div>
+              <strong>{a.nombre || a.correo}</strong>
+              <div className="hint">
+                {a.correo} · {a.gerencia}
+                {a.area ? ' › ' + a.area : ' (toda la gerencia)'}
+              </div>
+            </div>
+            <button type="button" className="secundario" onClick={() => quitar(a)}>
+              Quitar
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Armazón
+// ---------------------------------------------------------------------------
+
+type Pestana = 'reportar' | 'mios' | 'bandeja' | 'dashboard' | 'config';
+
+function Principal() {
+  const estadoUsuario = useUserState();
+  const enLinea = useEnLinea();
+  const [perfil, setPerfil] = useState<Perfil>({ es_seguridad: false, encargado_de: [] });
+  const [pestana, setPestana] = useState<Pestana>('reportar');
+  const [pendientes, setPendientes] = useState<Pendiente[]>([]);
+  const [abierto, setAbierto] = useState<number | null>(null);
+  const [version, setVersion] = useState(0);
+
+  const refrescarPendientes = useCallback(() => {
+    listarPendientes().then(setPendientes, () => undefined);
+  }, []);
+
+  const sincronizarAhora = useCallback(() => {
+    sincronizar()
+      .then((enviados) => {
+        if (enviados.length) setVersion((v) => v + 1);
+      })
+      .catch(() => undefined)
+      .finally(refrescarPendientes);
+  }, [refrescarPendientes]);
+
+  useEffect(() => {
+    fetchPerfil().then(setPerfil, () => undefined);
+  }, [version]);
+
+  useEffect(() => {
+    sincronizarAhora();
+    const t = window.setInterval(sincronizarAhora, 30_000);
+    window.addEventListener('online', sincronizarAhora);
+    return () => {
+      window.clearInterval(t);
+      window.removeEventListener('online', sincronizarAhora);
+    };
+  }, [sincronizarAhora]);
+
+  const gestiona = perfil.es_seguridad || perfil.encargado_de.length > 0;
+  const pestanas = useMemo(
+    () =>
+      (
+        [
+          ['reportar', 'Reportar'],
+          ['mios', 'Mis reportes'],
+          gestiona && ['bandeja', 'Bandeja'],
+          gestiona && ['dashboard', 'Dashboard'],
+          perfil.es_seguridad && ['config', 'Configuración'],
+        ] as (false | [Pestana, string])[]
+      ).filter(Boolean) as [Pestana, string][],
+    [gestiona, perfil.es_seguridad],
+  );
+
+  if (estadoUsuario.kind === 'loading') return <p className="centro hint">Cargando…</p>;
+  if (estadoUsuario.kind === 'error')
+    return (
+      <p className="centro error">
+        No se pudo identificar tu usuario. Abre la app una vez con señal para iniciar sesión.
+      </p>
+    );
+  const u = estadoUsuario.user;
+  const nombre = u.display_name ?? u.name ?? u.username;
+  const cambio = () => {
+    setVersion((v) => v + 1);
+    refrescarPendientes();
+  };
+
+  return (
+    <div className="app">
+      <header className="barra-sup">
+        <div>
+          <h1>Actos y Condiciones Inseguras</h1>
+          <span className="sub">Seguridad Industrial · Ingenio La Unión</span>
+        </div>
+        <div className="estado-red">
+          <span className={'punto ' + (enLinea ? 'en-linea' : 'sin-senal')} />
+          {enLinea ? 'En línea' : 'Sin señal'}
+          {pendientes.length > 0 && <span className="pend">{pendientes.length} por enviar</span>}
+        </div>
+      </header>
+
+      <nav className="pestanas">
+        {pestanas.map(([clave, etiqueta]) => (
+          <button
+            type="button"
+            key={clave}
+            className={pestana === clave ? 'activo' : ''}
+            onClick={() => setPestana(clave)}
+          >
+            {etiqueta}
+            {clave === 'mios' && pendientes.length > 0 && <b className="globo">{pendientes.length}</b>}
+          </button>
+        ))}
+      </nav>
+
+      <main className="contenido">
+        {pestana === 'reportar' && (
+          <FormularioReporte nombre={nombre} enLinea={enLinea} onGuardado={cambio} />
+        )}
+        {pestana === 'mios' && (
+          <MisReportes pendientes={pendientes} version={version} onAbrir={setAbierto} onCambio={cambio} />
+        )}
+        {pestana === 'bandeja' && <Bandeja perfil={perfil} version={version} onAbrir={setAbierto} />}
+        {pestana === 'dashboard' && <DashboardVista version={version} />}
+        {pestana === 'config' && <Configuracion onCambio={cambio} />}
+      </main>
+
+      {abierto !== null && (
+        <Detalle id={abierto} onCerrar={() => setAbierto(null)} onCambio={() => setVersion((v) => v + 1)} />
+      )}
+    </div>
+  );
+}
+
+export function App() {
+  return (
+    <AppStoreProvider loadUser={fetchMe}>
+      <Principal />
+    </AppStoreProvider>
+  );
+}
+
+</script>
+
+<script>
+(function montar() {
+  var raiz = document.getElementById('root');
+  function mostrarError(e) {
+    raiz.innerHTML = '';
+    var caja = document.createElement('div');
+    caja.className = 'radia-error';
+    caja.textContent = 'La vista previa no pudo arrancar:\n\n' + (e && e.stack ? e.stack : String(e));
+    raiz.appendChild(caja);
+  }
+  try {
+    var preludio = [
+      'var { useState, useEffect, useMemo, useCallback, useRef, useContext, useReducer,',
+      '      createContext, Fragment, StrictMode } = React;',
+      'var { ' + Object.keys(window.RadiaPreview.sdk).join(', ') + ' } = RadiaPreview.sdk;',
+    ].join('\n');
+    var fuente = Array.prototype.map
+      .call(document.querySelectorAll('script[data-archivo]'), function (s) {
+        return '// ---- ' + s.getAttribute('data-archivo') + '\n' + s.textContent;
+      })
+      .join('\n')
+      .replace(/^\s*import\s[\s\S]*?\sfrom\s+['"][^'"]+['"];?/gm, '')
+      .replace(/^\s*import\s+['"][^'"]+['"];?/gm, '')
+      .replace(/^(\s*)export\s+default\s+/gm, '$1')
+      .replace(/^(\s*)export\s+/gm, '$1')
+      .replace(/import\.meta\.env\.BASE_URL/g, "'/apps/vista-previa/static/'")
+      .replace(/import\.meta\.env\.[A-Z_]+/g, 'undefined');
+    var codigo = Babel.transform(
+      preludio + '\n' + fuente + '\n;window.__RadiaApp = typeof App !== "undefined" ? App : null;',
+      { filename: 'vista-previa.tsx', presets: [['typescript', { isTSX: true, allExtensions: true }], 'react'] }
+    ).code;
+    new Function(codigo)();
+    if (!window.__RadiaApp) throw new Error('No se encontró el componente App.');
+    ReactDOM.createRoot(raiz).render(React.createElement(window.__RadiaApp));
+  } catch (e) { mostrarError(e); }
+})();
+</script>
+</body>
+</html>
